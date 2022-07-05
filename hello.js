@@ -46,6 +46,30 @@ app.get('/login/success', (req, res) =>{
                     }
                 )
             })
+            const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
+            let totalAlbumCount;
+            await spotify.getArtistAlbums(dreiFragezeichenId).then((data) =>{
+                totalAlbumCount = data.body.total
+            })
+            const albumNumber = Math.floor(Math.random() * (totalAlbumCount - 1) + 1)
+
+            const offset = albumNumber - albumNumber % 50;
+            const limit = 50;
+            const adjustedAlbumNumber = albumNumber - offset;
+            let albumId;
+            await spotify.getArtistAlbums(dreiFragezeichenId, {limit, offset}).then(data => {
+                    albumId = data.body.items[adjustedAlbumNumber].id
+                }
+            )
+
+            await spotify.getAlbumTracks(albumId, {limit: 20}).then(async (data) => {
+                console.log(data.body.items)
+                for (const item of data.body.items) {
+                    await spotify.addToQueue(item.uri)
+                }
+            })
+            await spotify.setShuffle(false)
+            await spotify.skipToNext();
             await spotify.transferMyPlayback(['7769113f1c3db537e4e6827de2615c3799d70f17'], {play: true})
         },
         function(err) {
