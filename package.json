@@ -7,6 +7,6 @@
     "spotify-web-api-node": "^5.0.2"
   },
   "scripts": {
-    "start": "node hello.js"
+    "start": "node server.js"
   }
 }
