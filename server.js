@@ -1,6 +1,8 @@
 const SpotifyWebApi = require('spotify-web-api-node')
 const express = require('express')
 const dotenv = require('dotenv')
+const {response} = require("express");
+const axios = require('axios').default
 
 const app = express()
 dotenv.config()
@@ -35,23 +37,28 @@ app.get('/:path', (req, res) => {
     res.redirect(authorizeURL)
 })
 
-app.get('/authorized/togglePlay', async (req, res) => {
-    const spotify = await authorize(req)
-    const playbackState = await spotify.getMyCurrentPlaybackState()
-    if (playbackState.body) {
-        if (playbackState.body.is_playing) {
-            spotify.pause()
-        } else {
-            spotify.play()
-        }
-    }
-    res.send("Play toggled")
+const post = async (res, path) => {
+    const response = await axios.post('http://192.168.2.31:24879' + path)
+        .then(response => {
+            console.log(response)
+        })
+        .catch(error => {
+            console.log(error)
+        })
+    res.send(response)
+}
+
+
+app.post('/play-pause', async (req, res) =>{
+    await post(res,"/player/play-pause")
 })
 
-app.get('/authorized/skipNext', async (req, res) => {
-    const spotify = await authorize(req)
-    spotify.skipToNext()
-    res.send("skipNext toggled")
+app.post('/next', async (req, res) => {
+    await post(res,"/player/next")
+})
+
+app.post('/prev', async (req, res) => {
+    await post(res, "/player/prev")
 })
 
 app.get('/authorized/playRandom', async (req, res) => {
