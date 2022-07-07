@@ -1,44 +1,15 @@
-const SpotifyWebApi = require('spotify-web-api-node')
 const express = require('express')
 const dotenv = require('dotenv')
-const {response} = require("express");
 const axios = require('axios').default
+const spotify = require('spotify-finder')
 
 const app = express()
 dotenv.config()
 
-const login = (path) => {
-    return new SpotifyWebApi({
-        clientId: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET,
-        redirectUri: "http://localhost:8083" + path
-    })
-}
-
-const authorize = async (req) => {
-    const spotify = login(req.path)
-    const code = req.query.code
-
-    await spotify.authorizationCodeGrant(code).then(async (data) => {
-        spotify.setAccessToken(data.body['access_token']);
-        spotify.setRefreshToken(data.body['refresh_token']);
-    })
-
-    return spotify
-}
-
-app.get('/:path', (req, res) => {
-    const scopes = ['app-remote-control', 'streaming', 'user-modify-playback-state', 'user-read-playback-state', 'user-read-currently-playing']
-
-    const spotify = login("/authorized/" + req.params.path)
-
-    const authorizeURL = spotify.createAuthorizeURL(scopes, "hello");
-
-    res.redirect(authorizeURL)
-})
+const deviceUrl = 'http://192.168.2.31:24879'
 
 const post = async (res, path) => {
-    const response = await axios.post('http://192.168.2.31:24879' + path)
+    const response = await axios.post(deviceUrl + path)
         .then(response => {
             console.log(response)
         })
@@ -47,7 +18,6 @@ const post = async (res, path) => {
         })
     res.send(response)
 }
-
 
 app.post('/play-pause', async (req, res) =>{
     await post(res,"/player/play-pause")
@@ -61,41 +31,40 @@ app.post('/prev', async (req, res) => {
     await post(res, "/player/prev")
 })
 
-app.get('/authorized/playRandom', async (req, res) => {
-    res.send("Login successful")
-
-    const spotify = await authorize(req)
+app.post('/playRandom', async (req, res) => {
+    const client = new spotify({
+        consumer:{
+            key: '260a4318f5d14b73a5a0bc96a999ef4d',
+            secret: 'f320bb25f7d548c69a337c249d72fe8b'
+        }
+    })
 
     const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
     let totalAlbumCount;
-    await spotify.getArtistAlbums(dreiFragezeichenId).then((data) => {
-        totalAlbumCount = data.body.total
+    await client.getArtist(dreiFragezeichenId, {
+        albums: true,
+        album_type: 'album',
+    }).then(albums =>{
+        totalAlbumCount = albums.total
     })
+
     const albumNumber = Math.floor(Math.random() * (totalAlbumCount - 1) + 1)
 
     const offset = albumNumber - albumNumber % 50;
     const limit = 50;
     const adjustedAlbumNumber = albumNumber - offset;
     let albumId;
-    await spotify.getArtistAlbums(dreiFragezeichenId, {limit, offset}).then(data => {
-        albumId = data.body.items[adjustedAlbumNumber].id
+    client.getArtist(dreiFragezeichenId,{
+        albums: true,
+        album_type: 'album',
+        limit,
+        offset
+    }).then(albums =>{
+        albumId = albums.items[adjustedAlbumNumber].id
     })
-    console.log(await spotify.getAlbum(albumId))
-    await spotify.getAlbumTracks(albumId, {limit: 20}).then(async (data) => {
-        for (const item of data.body.items) {
-            console.log(item.uri)
-            await spotify.addToQueue(item.uri)
-        }
-    })
-    await spotify.transferMyPlayback(['7769113f1c3db537e4e6827de2615c3799d70f17'], {play: true})
-    await spotify.setShuffle(false)
-    await spotify.setVolume(0)
-    while (true) {
-        await spotify.skipToNext()
-        const currentTrack = await spotify.getMyCurrentPlayingTrack()
-        if (currentTrack.body.item.track_number === 1) break
-    }
-    await spotify.setVolume(20)
+
+    await axios.post(deviceUrl + "/player/load", "uri=spotify:album:3NYWEuwAPt4PIJ4OeNxmzO&play=true&shuffle=false")
+    res.send()
 }, function (err) {
     console.log('Something went wrong!', err);
 })
