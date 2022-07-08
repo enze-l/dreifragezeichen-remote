@@ -1,7 +1,6 @@
 const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
-const spotify = require('spotify-finder')
 const fs = require('fs')
 
 const app = express()
@@ -26,10 +25,10 @@ function saveSettings() {
 const post = async (res, path) => {
     const response = await axios.post(deviceUrl + path)
         .then(response => {
-            //console.log(response)
+            console.log(response)
         })
         .catch(error => {
-            //console.log(error)
+            console.log(error)
         })
     res.send(response)
 }
@@ -42,7 +41,18 @@ app.post('/play-pause', async (req, res) =>{
     if(track) {
         await post(res, "/player/play-pause")
     }
-    //todo play last played track
+    await axios.get(deviceUrl + "/web-api/v1/me/player/recently-played", { params: { limit: 50} } )
+        .then(response => {
+            response.data.items.forEach(item =>{
+                console.log(item.track.name+ " " + item.track.uri)
+                console.log(item.track.artists[0].name + " " + item.track.artists[0].uri)
+            })
+            console.log(response.data.items.length)
+        })
+        .catch(error => {
+            console.log(error)
+        })
+    res.send()
 })
 
 app.post('/next', async (req, res) => {
@@ -54,30 +64,24 @@ app.post('/prev', async (req, res) => {
 })
 
 app.post('/playRandom', async (req, res) => {
-    const client = new spotify({
-        consumer:{
-            key: '260a4318f5d14b73a5a0bc96a999ef4d',
-            secret: 'f320bb25f7d548c69a337c249d72fe8b'
-        }
-    })
-
     const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
     let totalAlbumCount;
-    await client.getArtist(dreiFragezeichenId, {
-        albums: true,
-        album_type: 'album',
-    }).then(albums =>{
-        totalAlbumCount = albums.total
-    })
+    await axios.get(deviceUrl + "/web-api/v1/artists/" + dreiFragezeichenId + "/albums")
+        .then(albums => {
+            totalAlbumCount = albums.data.total
+        })
+        .catch(error => {
+            console.log(error)
+        })
 
     let albumId
     if(totalAlbumCount > settings.lastAlbumCount) {
-        albumId = await getAlbumId(client, dreiFragezeichenId, totalAlbumCount)
+        albumId = await getAlbumId(dreiFragezeichenId, totalAlbumCount - 1)
+        settings.lastAlbumCount = totalAlbumCount
     } else {
-        const albumNumber = Math.floor(Math.random() * (totalAlbumCount - 1) + 1)
-        albumId = await getAlbumId(client, dreiFragezeichenId, albumNumber)
+        const albumNumber = Math.floor(Math.random() * (totalAlbumCount - 1))
+        albumId = await getAlbumId(dreiFragezeichenId, albumNumber)
     }
-    console.log(albumId)
 
     await axios.post(deviceUrl + "/player/load", "uri=spotify:album:" + albumId + "&play=true&shuffle=false")
     res.send()
@@ -85,19 +89,22 @@ app.post('/playRandom', async (req, res) => {
     console.log('Something went wrong!', err);
 })
 
-const getAlbumId = async (client, artistID, albumNumber) =>{
+const getAlbumId = async (artistID, albumNumber) => {
     const offset = albumNumber - albumNumber % 50;
     const limit = 50;
     const adjustedAlbumNumber = albumNumber - offset;
+
     let id
-    await client.getArtist(artistID,{
-        albums: true,
-        album_type: 'album',
-        limit,
-        offset
-    }).then(albums =>{
-        id = albums.items[adjustedAlbumNumber].id
+    await axios.get(deviceUrl + "/web-api/v1/artists/" + artistID + "/albums", {
+        params: { limit, offset}
     })
+        .then(albums => {
+            id = albums.data.items[adjustedAlbumNumber].id
+        })
+        .catch(error => {
+            console.log(error)
+        })
+
     return id
 }
 
