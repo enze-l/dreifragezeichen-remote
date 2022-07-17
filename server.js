@@ -2,7 +2,6 @@ const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
 const fs = require('fs')
-const e = require("express");
 
 const app = express()
 dotenv.config()
@@ -10,6 +9,7 @@ dotenv.config()
 const deviceUrl = 'http://192.168.2.31:24879'
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 let settings
+let timeout
 
 function loadSettings() {
     let rawData = fs.readFileSync('./savestate.json')
@@ -49,8 +49,15 @@ app.post('/play-pause', async (req, res) => {
             await post(res, "/player/next")
         }
     }
+    setSleepTimer(res)
     res.send()
 })
+
+const setSleepTimer = (res) => {
+    const pause = () => post(res, "/player/pause")
+    timeout = setTimeout(pause, 30 * 60 * 1000)
+    clearTimeout(timeout)
+}
 
 const getMostRecent = async () => {
     let trackNumber;
