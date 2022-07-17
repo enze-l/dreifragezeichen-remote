@@ -1,5 +1,57 @@
 {
-  "currentAlbum": "3CZCwdMpj2jnjI43ZlnY5T",
   "currentTrackNumber": 4,
-  "lastAlbumCount": 262
+  "lastAlbumCount": 263,
+  "playedAlbums": [
+    {
+      "albumNumber": 0,
+      "albumId": "1WlRnNunbHpnRTTVkxMRnd",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 4,
+      "albumId": "7FVn5TYEbQbWM6r8unRaCe",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 2,
+      "albumId": "76pYNMMVZTiuNy3IoXcavU",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 7,
+      "albumId": "5yI3MACumg0ZjPSRUOFmoB",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 8,
+      "albumId": "4BZfSV9maCil4l4yftT74F",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 9,
+      "albumId": "5KIQUoxcSBlPN3ie9xVmnA",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 6,
+      "albumId": "1cJ3fNx6K47p4eDFqhnvsA",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 3,
+      "albumId": "2uMs1XZBdGdZuXOY7draw4",
+      "playedTimes": 2
+    },
+    {
+      "albumNumber": 1,
+      "albumId": "2BkEUZY7Da7bqlUjmMA2Cq",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 5,
+      "albumId": "6T5D7KpnftvfLaYPp94U4y",
+      "playedTimes": 1
+    }
+  ],
+  "currentAlbum": "2uMs1XZBdGdZuXOY7draw4"
 }

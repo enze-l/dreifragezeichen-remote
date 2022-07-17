@@ -2,11 +2,13 @@ const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
 const fs = require('fs')
+const e = require("express");
 
 const app = express()
 dotenv.config()
 
 const deviceUrl = 'http://192.168.2.31:24879'
+const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 let settings
 
 function loadSettings() {
@@ -30,21 +32,21 @@ const post = async (res, path) => {
     res.send(response)
 }
 
-app.post('/play-pause', async (req, res) =>{
+app.post('/play-pause', async (req, res) => {
     let track
-    await axios.post(deviceUrl + "/player/current").then(current =>{
+    await axios.post(deviceUrl + "/player/current").then(current => {
         track = current.data.track
     })
-    if(track && track.artist[0].name === "Die drei ???") {
+    if (track && track.artist[0].name === "Die drei ???") {
         await post(res, "/player/play-pause")
     } else {
         let recentlyPlayed = await getMostRecent()
-        if(!recentlyPlayed.trackNumber){
-            recentlyPlayed = { lastAlbum: settings.currentAlbum, trackNumber: settings.currentTrackNumber}
+        if (!recentlyPlayed.trackNumber) {
+            recentlyPlayed = {lastAlbum: settings.currentAlbum, trackNumber: settings.currentTrackNumber}
         }
         await axios.post(deviceUrl + "/player/load", "uri=spotify:album:" + recentlyPlayed.lastAlbum + "&play=false&shuffle=false")
-        for (let i = recentlyPlayed.trackNumber; i > 0; i--){
-            await post(res,"/player/next")
+        for (let i = recentlyPlayed.trackNumber; i > 0; i--) {
+            await post(res, "/player/next")
         }
     }
     res.send()
@@ -55,8 +57,8 @@ const getMostRecent = async () => {
     let lastAlbum;
     await axios.get(deviceUrl + "/web-api/v1/me/player/recently-played", {params: {limit: 50}})
         .then(response => {
-            for(let i = 0; i<response.data.items.length; i++){
-                if(response.data.items[i].track.artists[0].name === "Die drei ???"){
+            for (let i = 0; i < response.data.items.length; i++) {
+                if (response.data.items[i].track.artists[0].name === "Die drei ???") {
                     trackNumber = response.data.items[i].track.track_number
                     lastAlbum = response.data.items[i].track.album.id
                     break
@@ -66,18 +68,18 @@ const getMostRecent = async () => {
         .catch(error => {
             console.log(error)
         })
-    return { trackNumber, lastAlbum }
+    return {trackNumber, lastAlbum}
 }
 
 app.post('/next', async (req, res) => {
-    await post(res,"/player/next")
+    await post(res, "/player/next")
 })
 
 app.post('/prev', async (req, res) => {
     await post(res, "/player/prev")
 })
 
-app.post('/first', async (req, res) =>{
+app.post('/first', async (req, res) => {
     await axios.post(deviceUrl + "/player/current").then(async current => {
         const track = current.data.current
         const trackId = track.substring(14)
@@ -95,9 +97,7 @@ app.post('/playRandom', async (req, res) => {
     console.log('Something went wrong!', err);
 })
 
-const playRandom = async () =>{
-    // todo make sudo-random by storing the played album counts
-    const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
+const playRandom = async () => {
     let totalAlbumCount;
     await axios.get(deviceUrl + "/web-api/v1/artists/" + dreiFragezeichenId + "/albums")
         .then(albums => {
@@ -107,27 +107,69 @@ const playRandom = async () =>{
             console.log(error)
         })
 
-    let albumId
-    if(totalAlbumCount > settings.lastAlbumCount) {
-        albumId = await getAlbumId(dreiFragezeichenId, totalAlbumCount - 1)
+    let albumNumber
+    if (totalAlbumCount > settings.lastAlbumCount) {
+        albumNumber = totalAlbumCount
         settings.lastAlbumCount = totalAlbumCount
     } else {
-        const albumNumber = Math.floor(Math.random() * (totalAlbumCount - 1))
-        albumId = await getAlbumId(dreiFragezeichenId, albumNumber)
+        albumNumber = await getSudoRandomAlbumNumber(totalAlbumCount)
     }
+    const albumId = await getAlbumId(albumNumber)
 
     await axios.post(deviceUrl + "/player/load", "uri=spotify:album:" + albumId + "&play=true&shuffle=false")
+
     settings.currentAlbum = albumId
+    increasePlayTime(albumId, albumNumber)
 }
 
-const getAlbumId = async (artistID, albumNumber) => {
+const increasePlayTime = (albumId, albumNumber) => {
+    let albumFound = false
+    settings.playedAlbums.forEach(album => {
+        if (album.albumId === albumId) {
+            album.playedTimes++
+            albumFound = true
+        }
+    })
+
+    if(!albumFound){
+        settings.playedAlbums.push({albumNumber: albumNumber, albumId: albumId, playedTimes: 1})
+    }
+    saveSettings()
+}
+
+const getSudoRandomAlbumNumber = async (totalAlbumCount) => {
+    // find out lowest playedTimesNumber
+    let lowestPlayedNumber = Infinity
+    if (settings.playedAlbums.length < totalAlbumCount) {
+        lowestPlayedNumber = 0
+    } else {
+        settings.playedAlbums.forEach(album => {
+            if (album.playedTimes < lowestPlayedNumber) {
+                lowestPlayedNumber = album.playedTimes
+            }
+        })
+    }
+    // get an array with all numbers that are played the least
+    const allAlbumNumbers = Array.from(Array(totalAlbumCount).keys())
+    const overplayedAlbumNumbers = []
+    settings.playedAlbums.forEach(album => {
+        if (album.playedTimes > lowestPlayedNumber) {
+            overplayedAlbumNumbers.push(album.albumNumber)
+        }
+    })
+    const albumNumberPool = allAlbumNumbers.filter(number => !overplayedAlbumNumbers.includes(number))
+    const sudoRandomAlbumIndex = Math.floor(Math.random() * albumNumberPool.length)
+    return albumNumberPool[sudoRandomAlbumIndex];
+}
+
+const getAlbumId = async (albumNumber) => {
     const offset = albumNumber - albumNumber % 50;
     const limit = 50;
     const adjustedAlbumNumber = albumNumber - offset;
 
     let id
-    await axios.get(deviceUrl + "/web-api/v1/artists/" + artistID + "/albums", {
-        params: { limit, offset}
+    await axios.get(deviceUrl + "/web-api/v1/artists/" + dreiFragezeichenId + "/albums", {
+        params: {limit, offset}
     })
         .then(albums => {
             id = albums.data.items[adjustedAlbumNumber].id
