@@ -99,6 +99,7 @@ app.post('/first', async (req, res) => {
 app.post('/playRandom', async (req, res) => {
     await playRandom()
     saveSettings()
+    setSleepTimer(res)
     res.send()
 }, function (err) {
     console.log('Something went wrong!', err);
