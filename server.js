@@ -6,7 +6,7 @@ const fs = require('fs')
 const app = express()
 dotenv.config()
 
-const deviceUrl = 'http://192.168.2.31:24879'
+const deviceUrl = process.env.DEVICE_URL
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 let settings
 let timeout

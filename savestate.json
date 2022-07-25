@@ -51,7 +51,17 @@
       "albumNumber": 5,
       "albumId": "6T5D7KpnftvfLaYPp94U4y",
       "playedTimes": 1
+    },
+    {
+      "albumNumber": 173,
+      "albumId": "3TcIn19pVz5LXE8UleuLuX",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 101,
+      "albumId": "5iNeANVy4supl8HowB9V2h",
+      "playedTimes": 1
     }
   ],
-  "currentAlbum": "2uMs1XZBdGdZuXOY7draw4"
+  "currentAlbum": "5iNeANVy4supl8HowB9V2h"
 }
