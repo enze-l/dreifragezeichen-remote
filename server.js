@@ -7,9 +7,11 @@ const app = express()
 dotenv.config()
 
 const deviceUrl = process.env.DEVICE_URL
+const alarmPlaylistId = process.env.ALARM_PLAYLIST_ID
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 let settings
 let timeout
+let alarm
 
 function loadSettings() {
     let rawData = fs.readFileSync('./savestate.json')
@@ -29,7 +31,9 @@ const post = async (res, path) => {
         .catch(error => {
             console.log(error)
         })
-    res.send(response)
+    if(res) {
+        res.send(response)
+    }
 }
 
 app.post('/play-pause', async (req, res) => {
@@ -53,10 +57,24 @@ app.post('/play-pause', async (req, res) => {
     res.send()
 })
 
+app.post('/setAlarm', async (req, res) =>{
+    await setAlarm()
+    res.send()
+})
+
 const setSleepTimer = (res) => {
     const pause = () => post(res, "/player/pause")
     timeout = setTimeout(pause, 30 * 60 * 1000)
     clearTimeout(timeout)
+}
+
+const setAlarm = (res) => {
+    clearTimeout(alarm)
+    const play = async () => {
+        await axios.post(deviceUrl + "/player/load", "uri=spotify:playlist:" + alarmPlaylistId + "&shuffle=true&play=false")
+        await post(undefined, "/player/next")
+    }
+    alarm = setTimeout(play, 8 * 60 * 60 * 1000)
 }
 
 const getMostRecent = async () => {
