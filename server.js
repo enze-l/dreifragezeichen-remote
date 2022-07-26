@@ -42,7 +42,7 @@ const post = async (res, path) => {
 }
 
 app.post('/on-off', async (req, res) => {
-    tvValue = 1 ? 0 : 1
+    tvValue = 1 - tvValue
     console.log(tvValue)
     await tv.write(tvValue)
     res.send()
