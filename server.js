@@ -2,6 +2,7 @@ const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
 const fs = require('fs')
+const Gpio = require('onoff').Gpio
 
 const app = express()
 dotenv.config()
@@ -9,9 +10,12 @@ dotenv.config()
 const deviceUrl = process.env.DEVICE_URL
 const alarmPlaylistId = process.env.ALARM_PLAYLIST_ID
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
+
 let settings
 let timeout
 let alarm
+
+const tv = new Gpio(23, 'out')
 
 function loadSettings() {
     let rawData = fs.readFileSync('./savestate.json')
@@ -35,6 +39,11 @@ const post = async (res, path) => {
         res.send(response)
     }
 }
+
+app.post('/on-off', async (req, res) => {
+    await tv.write(1)
+    res.send()
+})
 
 app.post('/play-pause', async (req, res) => {
     let track
