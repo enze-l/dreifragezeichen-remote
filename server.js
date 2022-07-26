@@ -16,6 +16,7 @@ let timeout
 let alarm
 
 const tv = new Gpio(23, 'out')
+let tvValue = false
 
 function loadSettings() {
     let rawData = fs.readFileSync('./savestate.json')
@@ -41,7 +42,8 @@ const post = async (res, path) => {
 }
 
 app.post('/on-off', async (req, res) => {
-    await tv.write(1)
+    tvValue = !tvValue
+    await tv.write(tvValue)
     res.send()
 })
 
