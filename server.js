@@ -85,6 +85,7 @@ const setAlarm = (res) => {
         await post(res, "/player/next")
     }
     alarm = setTimeout(play, 8 * 60 * 60 * 1000)
+    console.log("Alarm set")
 }
 
 const getMostRecent = async () => {
