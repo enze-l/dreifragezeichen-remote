@@ -2,7 +2,6 @@ const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
 const fs = require('fs')
-const Gpio = require('onoff').Gpio
 
 const app = express()
 dotenv.config()
@@ -14,11 +13,6 @@ const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 let settings
 let timeout
 let alarm
-
-const tv = new Gpio(23, 'out')
-const speaker = new Gpio(24, 'out')
-let tvValue = 0
-let speakerValue = 0
 
 function loadSettings() {
     let rawData = fs.readFileSync('./savestate.json')
@@ -43,19 +37,13 @@ const post = async (res, path) => {
     }
 }
 
-app.post('/tv/on-off', async (req, res) => {
-    tvValue = 1 - tvValue
-    await tv.write(tvValue)
-    res.send()
-})
-
-app.post('/speaker/on-off', async (req, res) => {
-    speakerValue = 1 - speakerValue
-    await speaker.write(speakerValue)
-    res.send()
-})
-
 app.post('/play-pause', async (req, res) => {
+    await playPause(req,res)
+    setSleepTimer(res)
+    res.send()
+})
+
+const playPause = async (req, res) => {
     let track
     await axios.post(deviceUrl + "/player/current").then(current => {
         track = current.data.track
@@ -72,26 +60,26 @@ app.post('/play-pause', async (req, res) => {
             await post(res, "/player/next")
         }
     }
-    setSleepTimer(res)
-    res.send()
-})
+}
 
-app.post('/setAlarm', async (req, res) =>{
+app.post('/play-pause/alarm', async (req, res) =>{
+    await playPause(req,res)
+    setSleepTimer(res)
     await setAlarm()
     res.send()
 })
 
 const setSleepTimer = (res) => {
     const pause = () => post(res, "/player/pause")
-    timeout = setTimeout(pause, 30 * 60 * 1000)
     clearTimeout(timeout)
+    timeout = setTimeout(pause, 30 * 60 * 1000)
 }
 
 const setAlarm = (res) => {
     clearTimeout(alarm)
     const play = async () => {
         await axios.post(deviceUrl + "/player/load", "uri=spotify:playlist:" + alarmPlaylistId + "&shuffle=true&play=false")
-        await post(undefined, "/player/next")
+        await post(res, "/player/next")
     }
     alarm = setTimeout(play, 8 * 60 * 60 * 1000)
 }
