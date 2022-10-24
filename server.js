@@ -51,12 +51,11 @@ const playPause = async (req, res) => {
         if(current.data.item) {
             artist = current.data.item.artists[0].name
         }
-        console.log(artist)
     })
     if(playing){
         await post(res, "/player/pause")
     }
-    if (artist && artist === "Die drei ???") {
+    else if (artist && artist === "Die drei ???") {
         await post(res, "/player/play-pause")
     } else {
         let recentlyPlayed = await getMostRecent()
