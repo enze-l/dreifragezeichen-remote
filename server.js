@@ -44,12 +44,15 @@ app.post('/play-pause', async (req, res) => {
 })
 
 const playPause = async (req, res) => {
-    let track
-    await axios.post(deviceUrl + "/player/current").then(current => {
-        track = current.data.track
+    let artist
+    let playing
+    await axios.get(deviceUrl + "/web-api/v1/me/player").then(current => {
+        playing = current.data.is_playing
+        artist = current.data.item.artists[0].name
+        console.log(playing)
     })
-    if (track && track.artist[0].name === "Die drei ???") {
-        await post(res, "/player/play-pause")
+    if(playing){
+        await post(res, "/player/pause")
     } else {
         let recentlyPlayed = await getMostRecent()
         if (!recentlyPlayed.trackNumber) {
