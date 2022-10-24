@@ -49,10 +49,13 @@ const playPause = async (req, res) => {
     await axios.get(deviceUrl + "/web-api/v1/me/player").then(current => {
         playing = current.data.is_playing
         artist = current.data.item.artists[0].name
-        console.log(playing)
+        console.log(artist)
     })
     if(playing){
         await post(res, "/player/pause")
+    }
+    if (artist && artist === "Die drei ???") {
+        await post(res, "/player/play-pause")
     } else {
         let recentlyPlayed = await getMostRecent()
         if (!recentlyPlayed.trackNumber) {
@@ -85,7 +88,6 @@ const setAlarm = (res) => {
         await post(res, "/player/next")
     }
     alarm = setTimeout(play, 8 * 60 * 60 * 1000)
-    console.log("Alarm set")
 }
 
 const getMostRecent = async () => {
