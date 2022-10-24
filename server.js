@@ -48,7 +48,9 @@ const playPause = async (req, res) => {
     let playing
     await axios.get(deviceUrl + "/web-api/v1/me/player").then(current => {
         playing = current.data.is_playing
-        artist = current.data.item.artists[0].name
+        if(current.data.item.artist[0]) {
+            artist = current.data.item.artists[0].name
+        }
         console.log(artist)
     })
     if(playing){
