@@ -1,3 +1,4 @@
+#!/usr/bin/env
 const express = require('express')
 const dotenv = require('dotenv')
 const axios = require('axios').default
