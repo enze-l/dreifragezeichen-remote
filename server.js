@@ -9,6 +9,8 @@ dotenv.config()
 
 const deviceUrl = process.env.DEVICE_URL
 const alarmPlaylistId = process.env.ALARM_PLAYLIST_ID
+const album_volume = process.env.ALBUM_VOLUME
+const alarm_volume = process.env.ALBUM_VOLUME
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 
 let settings
@@ -44,6 +46,10 @@ app.post('/play-pause', async (req, res) => {
     res.send()
 })
 
+const setVolume = async (volume)=> {
+    await axios.post(deviceUrl + "/player/set-volume", "volume=" + volume)
+}
+
 const playPause = async (req, res) => {
     let artist
     let playing
@@ -57,16 +63,20 @@ const playPause = async (req, res) => {
         await post(res, "/player/pause")
     }
     else if (artist && artist === "Die drei ???") {
+        await setVolume(album_volume)
         await post(res, "/player/play-pause")
     } else {
         let recentlyPlayed = await getMostRecent()
         if (!recentlyPlayed.trackNumber) {
             recentlyPlayed = {lastAlbum: settings.currentAlbum, trackNumber: settings.currentTrackNumber}
         }
+        await axios.post(deviceUrl + "/player/set-volume", "volume=0")
         await axios.post(deviceUrl + "/player/load", "uri=spotify:album:" + recentlyPlayed.lastAlbum + "&play=false&shuffle=false")
         for (let i = recentlyPlayed.trackNumber; i > 0; i--) {
             await post(res, "/player/next")
         }
+        await setVolume(album_volume)
+        console.log("Volume should be up")
     }
 }
 
@@ -86,6 +96,7 @@ const setSleepTimer = (res) => {
 const setAlarm = (res) => {
     clearTimeout(alarm)
     const play = async () => {
+        await setVolume(alarm_volume)
         await axios.post(deviceUrl + "/player/load", "uri=spotify:playlist:" + alarmPlaylistId + "&shuffle=true&play=false")
         await post(res, "/player/next")
     }

@@ -1,6 +1,6 @@
 {
   "currentTrackNumber": 4,
-  "lastAlbumCount": 263,
+  "lastAlbumCount": 267,
   "playedAlbums": [
     {
       "albumNumber": 0,
@@ -61,7 +61,36 @@
       "albumNumber": 101,
       "albumId": "5iNeANVy4supl8HowB9V2h",
       "playedTimes": 1
+    },
+    {
+      "albumNumber": 0,
+      "playedTimes": 5
+    },
+    {
+      "albumNumber": 199,
+      "albumId": "7Hjk98j1FSrHV5IHWmeeFh",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 89,
+      "albumId": "427kScPIeUSfoNKCNercMC",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 67,
+      "albumId": "5B7w9vkfh979tEyzwkLk9k",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 128,
+      "albumId": "1juMQy6yZVmk9Za6HeiicB",
+      "playedTimes": 1
+    },
+    {
+      "albumNumber": 258,
+      "albumId": "0aNqdp5ayuUNsOdUwu8x0b",
+      "playedTimes": 1
     }
   ],
-  "currentAlbum": "5iNeANVy4supl8HowB9V2h"
+  "currentAlbum": "0aNqdp5ayuUNsOdUwu8x0b"
 }
