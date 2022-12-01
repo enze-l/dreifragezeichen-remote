@@ -9,8 +9,7 @@ dotenv.config()
 
 const deviceUrl = process.env.DEVICE_URL
 const alarmPlaylistId = process.env.ALARM_PLAYLIST_ID
-const album_volume = process.env.ALBUM_VOLUME
-const alarm_volume = process.env.ALBUM_VOLUME
+const alarm_volume = process.env.ALARM_VOLUME
 const dreiFragezeichenId = "3meJIgRw7YleJrmbpbJK6S"
 
 let settings
@@ -46,8 +45,9 @@ app.post('/play-pause', async (req, res) => {
     res.send()
 })
 
-const setVolume = async (volume)=> {
-    await axios.post(deviceUrl + "/player/set-volume", "volume=" + volume)
+const setVolume = async (volume_percent)=> {
+    const volume_range = 65536
+    await axios.post(deviceUrl + "/player/set-volume", "volume=" + parseInt(volume_percent / 100 * volume_range))
 }
 
 const playPause = async (req, res) => {
@@ -63,7 +63,7 @@ const playPause = async (req, res) => {
         await post(res, "/player/pause")
     }
     else if (artist && artist === "Die drei ???") {
-        await setVolume(album_volume)
+        await setVolume(settings.album_volume_percent)
         await post(res, "/player/play-pause")
     } else {
         let recentlyPlayed = await getMostRecent()
@@ -75,7 +75,7 @@ const playPause = async (req, res) => {
         for (let i = recentlyPlayed.trackNumber; i > 0; i--) {
             await post(res, "/player/next")
         }
-        await setVolume(album_volume)
+        await setVolume(settings.album_volume_percent)
         console.log("Volume should be up")
     }
 }
@@ -88,7 +88,16 @@ app.post('/play-pause/alarm', async (req, res) =>{
 })
 
 const setSleepTimer = (res) => {
-    const pause = () => post(res, "/player/pause")
+    const pause = async () => {
+        post(res, "/player/pause").then()
+        await axios.get(deviceUrl + "/web-api/v1/me/player").then(
+            response => {
+                settings.album_volume_percent = response.data.device.volume_percent
+                console.log(settings.album_volume_percent)
+            }
+        )
+        saveSettings()
+    }
     clearTimeout(timeout)
     timeout = setTimeout(pause, 30 * 60 * 1000)
 }
